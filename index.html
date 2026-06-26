@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Статус населених пунктів України</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="dark">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-flag">🇺🇦</span>
+        <div>
+          <h1 class="header-title">Статус населених пунктів</h1>
+          <p class="header-sub">Дані: DeepStateMap · Оновлення кожні 15 хв</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="update-info" id="updateInfo">
+          <span class="update-dot" id="updateDot"></span>
+          <span id="updateText">Завантаження…</span>
+        </div>
+        <button class="btn-theme" id="themeToggle" title="Змінити тему">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-value" id="statTotal">—</span>
+      <span class="stat-label">Всього</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item free">
+      <span class="stat-value" id="statFree">—</span>
+      <span class="stat-label">🟢 Вільних</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item occupied">
+      <span class="stat-value" id="statOccupied">—</span>
+      <span class="stat-label">🔴 Окупованих</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item unknown">
+      <span class="stat-value" id="statUnknown">—</span>
+      <span class="stat-label">⚪ Невідомо</span>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-wrap">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Пошук за назвою, областю, районом…"
+        autocomplete="off"
+      />
+      <button class="search-clear" id="searchClear" title="Очистити">✕</button>
+    </div>
+
+    <div class="filters-row">
+      <select class="filter-select" id="filterOblast">
+        <option value="">Всі області</option>
+      </select>
+      <select class="filter-select" id="filterRaion">
+        <option value="">Всі райони</option>
+      </select>
+      <select class="filter-select" id="filterStatus">
+        <option value="">Всі статуси</option>
+        <option value="free">🟢 Вільний</option>
+        <option value="occupied">🔴 Окупований</option>
+        <option value="unknown">⚪ Невідомо</option>
+      </select>
+      <button class="btn-reset" id="resetFilters">Скинути</button>
+    </div>
+  </div>
+
+  <!-- TABLE WRAP -->
+  <div class="table-wrap">
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="spinner"></div>
+      <p class="loading-text">Завантаження даних…</p>
+    </div>
+
+    <div class="table-container" id="tableContainer">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th class="col-oblast sortable" data-col="oblast">
+              Область <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-raion sortable" data-col="raion">
+              Район <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-name sortable" data-col="name">
+              Населений пункт <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-status sortable" data-col="status">
+              Статус <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-date sortable" data-col="date">
+              Оновлено <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-map">DeepStateMap</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span id="rowCount">0 записів</span>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <span class="empty-icon">🔍</span>
+    <p>Нічого не знайдено за вашим запитом</p>
+    <button class="btn-reset" onclick="resetAll()">Скинути фільтри</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
