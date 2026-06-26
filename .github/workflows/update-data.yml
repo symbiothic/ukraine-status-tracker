@@ -1,0 +1,95 @@
+name: Update DeepStateMap Data
+
+on:
+  schedule:
+    # Every 15 minutes (GitHub Actions minimum granularity)
+    - cron: '*/15 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches: [main]  # Initial data fetch on deploy
+
+permissions:
+  contents: write  # Allow committing data files
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch DeepStateMap data
+        run: |
+          echo "Fetching DeepStateMap API data..."
+          
+          # Fetch the main map data
+          HTTP_STATUS=$(curl -s -o data/map.json -w "%{http_code}" \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5 \
+            -H "Accept: application/json" \
+            -H "User-Agent: ukraine-status-tracker/1.0" \
+            "https://deepstatemap.live/api/history/last")
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "ERROR: API returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          
+          # Validate JSON
+          if ! python3 -c "import json,sys; json.load(open('data/map.json'))" 2>/dev/null; then
+            echo "ERROR: Response is not valid JSON"
+            cat data/map.json | head -100
+            exit 1
+          fi
+          
+          echo "Success! Data saved to data/map.json"
+          wc -c data/map.json
+
+      - name: Update metadata
+        run: |
+          # Write metadata file
+          python3 << 'EOF'
+          import json, datetime, os
+
+          meta = {
+            "updated_at": datetime.datetime.utcnow().isoformat() + "Z",
+            "source": "https://deepstatemap.live/api/history/last"
+          }
+
+          # Try to read feature count from map.json
+          try:
+            with open("data/map.json") as f:
+              data = json.load(f)
+            features = data.get("map", data).get("features", [])
+            meta["feature_count"] = len(features)
+            print(f"Features: {len(features)}")
+          except Exception as e:
+            print(f"Warning: {e}")
+
+          with open("data/meta.json", "w") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+
+          print("Metadata written.")
+          EOF
+
+      - name: Commit and push data
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add data/map.json data/meta.json
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+            git commit -m "chore: update map data [${TIMESTAMP}]"
+            git push
+            echo "Data committed and pushed."
+          fi
